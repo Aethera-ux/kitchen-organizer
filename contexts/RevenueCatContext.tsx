@@ -33,10 +33,14 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
       console.log('[RevenueCat] Initializing...');
       
       if (Platform.OS !== 'web') {
+        // Set log level for debugging
         Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+        
+        // Configure RevenueCat
         await Purchases.configure({ apiKey: API_KEY });
         console.log('[RevenueCat] Configured successfully');
 
+        // Get customer info
         const info = await Purchases.getCustomerInfo();
         console.log('[RevenueCat] Customer info loaded:', {
           activeEntitlements: Object.keys(info.entitlements.active),
@@ -45,15 +49,22 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
         setCustomerInfo(info);
         updateProStatus(info);
 
+        // Get offerings
         const offerings = await Purchases.getOfferings();
         console.log('[RevenueCat] Offerings loaded:', {
           current: offerings.current?.identifier,
           all: offerings.all ? Object.keys(offerings.all) : [],
+          packages: offerings.current?.availablePackages.map(p => ({
+            identifier: p.identifier,
+            product: p.product.identifier,
+          })),
         });
+        
         if (offerings.current) {
           setOfferings([offerings.current]);
         }
 
+        // Listen for customer info updates
         Purchases.addCustomerInfoUpdateListener((info) => {
           console.log('[RevenueCat] Customer info updated');
           setCustomerInfo(info);
@@ -111,8 +122,11 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
       const customerInfo = await Purchases.restorePurchases();
       setCustomerInfo(customerInfo);
       updateProStatus(customerInfo);
-      console.log('[RevenueCat] Restore successful');
-      return { success: true };
+      
+      const hasActiveSubscription = Object.keys(customerInfo.entitlements.active).length > 0;
+      console.log('[RevenueCat] Restore successful, active subscriptions:', hasActiveSubscription);
+      
+      return { success: hasActiveSubscription };
     } catch (error: any) {
       console.error('[RevenueCat] Restore error:', error);
       return { success: false, error: error.message || 'Restore failed' };
