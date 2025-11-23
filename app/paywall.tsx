@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useRevenueCat } from '@/contexts/RevenueCatContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { X, Check, Sparkles, Calendar, ChefHat, Zap } from 'lucide-react-native';
 import { useState } from 'react';
 
@@ -13,6 +14,7 @@ const FEATURES = [
 
 export default function PaywallScreen() {
   const { offerings, purchasePackage, restorePurchases, isPro } = useRevenueCat();
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
   const [selectedPackageId, setSelectedPackageId] = useState<string>('');
 
@@ -54,7 +56,7 @@ export default function PaywallScreen() {
           [{ text: 'OK', onPress: () => router.back() }]
         );
       } else {
-        Alert.alert('No Purchases Found', 'We couldn&apos;t find any previous purchases.');
+        Alert.alert('No Purchases Found', 'We couldn\'t find any previous purchases.');
       }
     } catch (error) {
       console.error('[Paywall] Restore error:', error);
@@ -66,18 +68,18 @@ export default function PaywallScreen() {
 
   if (isPro) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ title: 'Subscription', presentation: 'modal' }} />
         <View style={styles.successContainer}>
-          <View style={styles.successIcon}>
-            <Check size={48} color="#10b981" strokeWidth={3} />
+          <View style={[styles.successIcon, { backgroundColor: colors.primary + '20' }]}>
+            <Check size={48} color={colors.primary} strokeWidth={3} />
           </View>
-          <Text style={styles.successTitle}>You're a Pro!</Text>
-          <Text style={styles.successText}>
+          <Text style={[styles.successTitle, { color: colors.text }]}>You're a Pro!</Text>
+          <Text style={[styles.successText, { color: colors.textSecondary }]}>
             Thank you for supporting Meal Prepper
           </Text>
           <TouchableOpacity
-            style={styles.closeButton}
+            style={[styles.closeButton, { backgroundColor: colors.primary }]}
             onPress={() => router.back()}
           >
             <Text style={styles.closeButtonText}>Close</Text>
@@ -90,15 +92,27 @@ export default function PaywallScreen() {
   const currentOffering = offerings[0];
   const packages = currentOffering?.availablePackages || [];
 
+  // Sort packages: yearly, monthly, weekly
+  const sortedPackages = [...packages].sort((a, b) => {
+    const order = { yearly: 1, annual: 1, monthly: 2, weekly: 3 };
+    const aKey = a.identifier.toLowerCase();
+    const bKey = b.identifier.toLowerCase();
+    const aOrder = Object.entries(order).find(([key]) => aKey.includes(key))?.[1] || 99;
+    const bOrder = Object.entries(order).find(([key]) => bKey.includes(key))?.[1] || 99;
+    return aOrder - bOrder;
+  });
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen 
         options={{ 
           title: 'Upgrade to Pro',
           presentation: 'modal',
+          headerStyle: { backgroundColor: colors.surface },
+          headerTintColor: colors.text,
           headerRight: () => (
             <TouchableOpacity onPress={() => router.back()} style={styles.headerCloseButton}>
-              <X size={24} color="#0f172a" />
+              <X size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }} 
@@ -106,70 +120,72 @@ export default function PaywallScreen() {
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Sparkles size={48} color="#10b981" />
+          <View style={[styles.iconContainer, { backgroundColor: colors.primary + '20' }]}>
+            <Sparkles size={48} color={colors.primary} />
           </View>
-          <Text style={styles.title}>Unlock Meal Prepper Pro</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Unlock Meal Prepper Pro</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Get unlimited access to all premium features
           </Text>
         </View>
 
-        <View style={styles.featuresSection}>
+        <View style={[styles.featuresSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           {FEATURES.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <View key={index} style={styles.featureItem}>
-                <View style={styles.featureIcon}>
-                  <Icon size={20} color="#10b981" />
+                <View style={[styles.featureIcon, { backgroundColor: colors.primary + '15' }]}>
+                  <Icon size={20} color={colors.primary} />
                 </View>
-                <Text style={styles.featureText}>{feature.text}</Text>
+                <Text style={[styles.featureText, { color: colors.text }]}>{feature.text}</Text>
               </View>
             );
           })}
         </View>
 
-        {packages.length > 0 ? (
+        {sortedPackages.length > 0 ? (
           <View style={styles.packagesSection}>
-            <Text style={styles.packagesTitle}>Choose Your Plan</Text>
-            {packages.map((pkg) => {
+            <Text style={[styles.packagesTitle, { color: colors.text }]}>Choose Your Plan</Text>
+            {sortedPackages.map((pkg) => {
               const isSelected = selectedPackageId === pkg.identifier;
-              const isPopular = pkg.identifier.includes('annual') || pkg.identifier.includes('yearly');
+              const isPopular = pkg.identifier.toLowerCase().includes('annual') || 
+                               pkg.identifier.toLowerCase().includes('yearly');
               
               return (
                 <TouchableOpacity
                   key={pkg.identifier}
                   style={[
                     styles.packageCard,
-                    isPopular && styles.packageCardPopular,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                    isPopular && { borderColor: colors.primary, borderWidth: 2 },
                   ]}
                   onPress={() => handlePurchase(pkg)}
                   disabled={loading}
                   activeOpacity={0.7}
                 >
                   {isPopular && (
-                    <View style={styles.popularBadge}>
+                    <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
                       <Text style={styles.popularBadgeText}>MOST POPULAR</Text>
                     </View>
                   )}
                   
                   <View style={styles.packageHeader}>
                     <View style={styles.packageInfo}>
-                      <Text style={styles.packageTitle}>
+                      <Text style={[styles.packageTitle, { color: colors.text }]}>
                         {pkg.product.title.replace('(Meal Prepper)', '').trim()}
                       </Text>
                       {pkg.product.description && (
-                        <Text style={styles.packageDescription}>
+                        <Text style={[styles.packageDescription, { color: colors.textSecondary }]}>
                           {pkg.product.description}
                         </Text>
                       )}
                     </View>
                     <View style={styles.packagePricing}>
-                      <Text style={styles.packagePrice}>
+                      <Text style={[styles.packagePrice, { color: colors.primary }]}>
                         {pkg.product.priceString}
                       </Text>
                       {pkg.product.subscriptionPeriod && (
-                        <Text style={styles.packagePeriod}>
+                        <Text style={[styles.packagePeriod, { color: colors.textSecondary }]}>
                           /{pkg.product.subscriptionPeriod === 'P1Y' ? 'year' : 
                             pkg.product.subscriptionPeriod === 'P1M' ? 'month' : 
                             pkg.product.subscriptionPeriod === 'P1W' ? 'week' : 'period'}
@@ -179,9 +195,9 @@ export default function PaywallScreen() {
                   </View>
 
                   {isSelected && loading ? (
-                    <ActivityIndicator color="#10b981" style={styles.packageLoader} />
+                    <ActivityIndicator color={colors.primary} style={styles.packageLoader} />
                   ) : (
-                    <View style={styles.packageAction}>
+                    <View style={[styles.packageAction, { backgroundColor: colors.primary }]}>
                       <Text style={styles.packageActionText}>Subscribe</Text>
                     </View>
                   )}
@@ -191,7 +207,10 @@ export default function PaywallScreen() {
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No subscription plans available</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              Loading subscription plans...
+            </Text>
           </View>
         )}
 
@@ -200,12 +219,12 @@ export default function PaywallScreen() {
           onPress={handleRestore}
           disabled={loading}
         >
-          <Text style={styles.restoreButtonText}>
+          <Text style={[styles.restoreButtonText, { color: colors.primary }]}>
             {loading ? 'Restoring...' : 'Restore Purchases'}
           </Text>
         </TouchableOpacity>
 
-        <Text style={styles.disclaimer}>
+        <Text style={[styles.disclaimer, { color: colors.textTertiary }]}>
           Subscriptions automatically renew unless cancelled at least 24 hours before the end of the current period.
         </Text>
       </ScrollView>
@@ -216,7 +235,6 @@ export default function PaywallScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   headerCloseButton: {
     padding: 8,
@@ -235,7 +253,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#10b98120',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -243,21 +260,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800' as const,
-    color: '#0f172a',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#64748b',
     textAlign: 'center',
     lineHeight: 24,
   },
   featuresSection: {
-    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
+    borderWidth: 1,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -267,9 +282,6 @@ const styles = StyleSheet.create({
       },
       android: {
         elevation: 2,
-      },
-      web: {
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
       },
     }),
   },
@@ -282,14 +294,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#10b98115',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   featureText: {
     fontSize: 16,
-    color: '#0f172a',
     fontWeight: '500' as const,
     flex: 1,
   },
@@ -299,16 +309,13 @@ const styles = StyleSheet.create({
   packagesTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#0f172a',
     marginBottom: 16,
   },
   packageCard: {
-    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -319,20 +326,12 @@ const styles = StyleSheet.create({
       android: {
         elevation: 2,
       },
-      web: {
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-      },
     }),
-  },
-  packageCardPopular: {
-    borderColor: '#10b981',
-    borderWidth: 2,
   },
   popularBadge: {
     position: 'absolute',
     top: -12,
     right: 16,
-    backgroundColor: '#10b981',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -356,12 +355,10 @@ const styles = StyleSheet.create({
   packageTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#0f172a',
     marginBottom: 4,
   },
   packageDescription: {
     fontSize: 14,
-    color: '#64748b',
   },
   packagePricing: {
     flexDirection: 'row',
@@ -370,15 +367,12 @@ const styles = StyleSheet.create({
   packagePrice: {
     fontSize: 24,
     fontWeight: '800' as const,
-    color: '#10b981',
   },
   packagePeriod: {
     fontSize: 14,
-    color: '#64748b',
     fontWeight: '500' as const,
   },
   packageAction: {
-    backgroundColor: '#10b981',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
@@ -399,11 +393,9 @@ const styles = StyleSheet.create({
   restoreButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: '#10b981',
   },
   disclaimer: {
     fontSize: 12,
-    color: '#94a3b8',
     textAlign: 'center',
     lineHeight: 18,
   },
@@ -413,7 +405,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#64748b',
+    marginTop: 16,
   },
   successContainer: {
     flex: 1,
@@ -425,7 +417,6 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#10b98120',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -433,17 +424,14 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: 28,
     fontWeight: '800' as const,
-    color: '#0f172a',
     marginBottom: 8,
   },
   successText: {
     fontSize: 16,
-    color: '#64748b',
     textAlign: 'center',
     marginBottom: 32,
   },
   closeButton: {
-    backgroundColor: '#10b981',
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 12,
