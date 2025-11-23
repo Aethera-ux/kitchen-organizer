@@ -31,6 +31,7 @@ export function DrawerProvider({ children }: DrawerProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { colors, themeMode, setThemeMode } = useTheme();
   const insets = useSafeAreaInsets();
+  const { customerInfo } = useRevenueCat();
 
   const openDrawer = useCallback(() => setIsOpen(true), []);
   const closeDrawer = useCallback(() => setIsOpen(false), []);
