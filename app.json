@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.rork.kitchen-organizer"
+      "bundleIdentifier": "com.yourcompany.mealprepper"
     },
     "android": {
       "adaptiveIcon": {
@@ -30,6 +31,10 @@
     "plugins": [
       [
         "expo-router",
+        "react-native-purchases",
+        {
+          "appleApiKey": "test_fkFFvhrOMDJjOfWOafTyzBlpEwd"
+        }
         {
           "origin": "https://rork.com/"
         }
