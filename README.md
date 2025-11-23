@@ -1,5 +1,3 @@
-# Welcome to your Rork app
-
 ## Project info
 
 This is a native cross-platform mobile app created with [Rork](https://rork.com)
