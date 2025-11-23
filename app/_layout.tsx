@@ -13,8 +13,6 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-
-
 function RootLayoutNav() {
   const { colors } = useTheme();
   return (
@@ -85,15 +83,15 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <DrawerProvider>
-          <RevenueCatProvider>
+        <RevenueCatProvider>
+          <DrawerProvider>
             <KitchenProvider>
-              <GestureHandlerRootView>
+              <GestureHandlerRootView style={{ flex: 1 }}>
                 <RootLayoutNav />
               </GestureHandlerRootView>
             </KitchenProvider>
-          </RevenueCatProvider>
-        </DrawerProvider>
+          </DrawerProvider>
+        </RevenueCatProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
